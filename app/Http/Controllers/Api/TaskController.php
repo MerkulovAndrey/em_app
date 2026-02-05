@@ -67,7 +67,18 @@ class TaskController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try {
+            $data = Task::where('id', '=', $id)->get();
+            if (count($data) < 1) {
+                throw new \Exception(sprintf("Задача с id:%d не существует", $id));
+            }
+        } catch (\Exception $e) {
+            $this->message = "Ошибка получения задачи";
+            $this->error = $e->getMessage();
+            $this->status = Response::HTTP_INTERNAL_SERVER_ERROR;
+        }
+
+        return $this->response($data);
     }
 
     /**
@@ -75,7 +86,28 @@ class TaskController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $data = [];
+
+        try {
+            $task = Task::find($id);
+
+            // Валидация входящих данных
+            $validated = $request->validate(Task::rules());
+
+            $task = Task::findOrFail($id);
+
+            if (!$task->update($validated)) {
+                throw new \Exception("Задача не обновлена");
+            } else {
+                $this->status = Response::HTTP_OK; // 200
+            }
+        } catch (\Exception $e) {
+            $this->message = "Ошибка обновления задачи";
+            $this->error = $e->getMessage();
+            $this->status = Response::HTTP_INTERNAL_SERVER_ERROR; // 500
+        }
+
+        return $this->response($data);
     }
 
     /**
@@ -83,7 +115,18 @@ class TaskController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $data = Task::destroy($id);
+            if ($data === 0) {
+                throw new \Exception(sprintf("Задача с id:%d не существует", $id));
+            }
+        } catch (\Exception $e) {
+            $this->message = "Ошибка удаления задачи";
+            $this->error = $e->getMessage();
+            $this->status = Response::HTTP_INTERNAL_SERVER_ERROR;
+        }
+
+        return $this->response($data);
     }
 
     /**
